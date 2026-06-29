@@ -1,5 +1,6 @@
 from .base import ForwardOperator
 from .pseudoinverse import ConjugateGradientInverse
+from .blur_downsample import BlurDownsampleOperator, gaussian_psf
 from .diagnostics import (
   _psnr,
   adjoint_test,
@@ -19,5 +20,7 @@ __all__ = [
   "reconstruction_floor",
   "impulse_alignment_test",
   "assert_adjoint", 
-  "assert_alignment"
+  "assert_alignment",
+  "BlurDownsampleOperator",
+  "gaussian_psf"
 ]

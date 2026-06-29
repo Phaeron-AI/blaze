@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 import torch
-from torch import Tensor
 
 from .base import ForwardOperator
 from .pseudoinverse import ConjugateGradientInverse
@@ -18,7 +16,7 @@ def adjoint_test(op: ForwardOperator, image_shape, device, seed: int = 0):
   y = op.A(x)
   yr = torch.randn(*y.shape, generator=g, device=device)
   ATyr = op.A_T(yr)
-  if ATyr.shape != x.shape:
+  if not isinstance(ATyr, torch.Tensor) or ATyr.shape != x.shape:
     return None, None, float("inf")
   lhs = (op.A(x) * yr).sum().item()
   rhs = (x * ATyr).sum().item()
@@ -65,8 +63,7 @@ def assert_adjoint(op: ForwardOperator, image_shape, device, rtol: float = 1e-4)
       f"{rel:.2e} >= {rtol:.0e}. A^T is not the true adjoint of A. "
       "Range-null projectors would not be orthogonal. Refusing to build."
     )
- 
- 
+
 def assert_alignment(op: ForwardOperator, H: int, W: int, device, max_drift: float = 0.05) -> None:
   _, _, drift = impulse_alignment_test(op, H, W, device)
   if drift > max_drift:

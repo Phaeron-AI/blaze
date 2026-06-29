@@ -8,13 +8,13 @@ from .base import ForwardOperator
 
 class BlurDownsampleOperator(ForwardOperator):
   def __init__(self, kernel: Tensor, scale: int)-> None:
-    if kernel.dim != 2:
+    if kernel.dim() != 2:
       raise ValueError(f"Kernel-Size-->Expected: (kH, KW); Got: {tuple(kernel.shape)}")
     if kernel.shape[0] % 2 == 0 or kernel.shape[1] % 2 ==0:
       raise ValueError("Kernel Dimensions must be odd. PSF must be a well defined center")
     
     self.scale = int(scale)
-    k = kernel / kernel.smm() # type: ignore
+    k = kernel / kernel.sum()
     self.kH, self.kW = kernel.shape
 
     self.weight = k.view(1, 1, self.kH, self.kW)
