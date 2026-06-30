@@ -1,9 +1,5 @@
-"""Verify RangeNullDecomposition against the theorems it claims to implement.
-Each test maps to a result in the research doc §3/§4."""
-
 import sys, torch
 import torch.nn.functional as F
-sys.path.insert(0, "/home/claude")
 
 from ..src.operators import BlurDownsampleOperator, gaussian_psf
 from ..src.operators import ForwardOperator
@@ -14,7 +10,6 @@ torch.manual_seed(0)
 print(f"device: {device}\n")
 torch.backends.cudnn.enabled = False
 
-# --- a certified operator and a measurement ---
 op = BlurDownsampleOperator(gaussian_psf(5, 1.0).to(device), scale=2)
 H = W = 64
 yy, xx = torch.meshgrid(torch.linspace(0, 1, H), torch.linspace(0, 1, W), indexing="ij")
