@@ -11,6 +11,8 @@ from .decomposition.range_null import RangeNullDecomposition
 from .priors.base import VelocityPrior
 from .priors.normalized import NormalizedVelocityPrior
 from .samplers.null_space_flow import NullSpaceFlowSampler
+from .priors.schedules import DiscreteLinearSchedule
+from .samplers.ddnm import DDNMSampler
 
 @dataclass
 class ReconstructionConfig:
@@ -47,4 +49,39 @@ class SuperResReconstructor:
       "x_hat": x_hat,
       "consistency_residual": dec.consistency_residual(x_hat),
       "pinv_floor": dec.pinv_reconstruction, 
+    }
+
+
+class DDNMReconstructor:
+  def __init__(self, operator: ForwardOperator,
+    eps_fn, schedule: Optional[DiscreteLinearSchedule] = None,
+    config: Optional[ReconstructionConfig] = None,
+    prior_scale: float = 2.0, prior_shift: float = -1.0,
+    stochastic: bool = False
+  ):
+    self.operator = operator
+    self.eps_fn = eps_fn
+    self.schedule = schedule or DiscreteLinearSchedule(1000, 1e-4, 2e-2)
+    self.config = config or ReconstructionConfig()
+    self.prior_scale = prior_scale
+    self.prior_shift = prior_shift
+    self.stochastic = stochastic
+
+  @torch.no_grad()
+  def reconstruct(self, y: torch.Tensor, image_shape: tuple, generator: Optional[torch.Generator] = None) -> dict:
+    dec = RangeNullDecomposition(
+      self.operator, y, image_shape=image_shape, cg_iters=self.config.cg_iters,
+    )
+    sampler = DDNMSampler(
+      self.eps_fn, dec, self.schedule,
+      num_steps=self.config.num_steps,
+      prior_scale=self.prior_scale, prior_shift=self.prior_shift,
+      stochastic=self.stochastic,
+      check_consistency=self.config.check_consistency,
+    )
+    x_hat = sampler.sample(generator=generator)
+    return {
+      "x_hat": x_hat,
+      "consistency_residual": dec.consistency_residual(x_hat),
+      "pinv_floor": dec.pinv_reconstruction,
     }
