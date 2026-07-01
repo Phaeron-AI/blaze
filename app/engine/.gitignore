@@ -6,3 +6,18 @@
 # Virtual Environment
 venv/
 .venv/
+
+# Python Execution Cache
+__pycache__/
+
+# Pre-Trained/Saved Checkpoints
+*.pt
+
+# Run Files
+*.json
+*.jsonl
+
+# Image Files
+*.jpg
+*.jpeg
+*.png
