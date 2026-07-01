@@ -1,7 +1,8 @@
 import sys
 import torch
 
-CKPT = sys.argv[1] if len(sys.argv) > 1 else "models/256x256_diffusion_uncond.pt"
+print(sys.argv[-1])
+CKPT = sys.argv[1] if len(sys.argv) > 1 else r"app\engine\src\models\256x256_diffusion_uncond.pt"
 
 print(f"probing: {CKPT}")
 print(f"torch {torch.__version__}, cuda available: {torch.cuda.is_available()}\n")
