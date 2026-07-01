@@ -53,14 +53,6 @@ class NullSpaceFlowSampler:
         v2 = self._null_v(x_pred, min(t + dt, 1.0), **cond)
         x_hat = x_hat + 0.5 * dt * (v1 + v2)
 
-      # NOTE: we deliberately do NOT re-anchor (x_hat = reconstruct(x_hat))
-      # each step. The velocity is already null-projected, so the range
-      # component never drifts — consistency holds without re-anchoring.
-      # Re-anchoring would re-run project_null on an already-projected
-      # state every step, compounding the projector's O(eps) damping bias
-      # and slowly eroding the null (signal) component. Verified: with
-      # re-anchor the recovered signal is ~24% off; without it, <1%.
-
       if self.check_consistency:
         self.dec.assert_consistent(x_hat, rtol=self.consistency_rtol)
 
