@@ -9,8 +9,8 @@ so its null component is exactly  P_N (z0 + x1 - x0).
 
 import torch
 
-from ..src.operators.blur_downsample import BlurDownsampleOperator, gaussian_psf
 from ..src.decomposition.range_null import RangeNullDecomposition
+from ..src.operators.blur_downsample import BlurDownsampleOperator, gaussian_psf
 from ..src.priors.base import ConstantVelocityStub
 from ..src.samplers.null_space_flow import NullSpaceFlowSampler
 
@@ -32,10 +32,14 @@ x1 = torch.randn(1, 1, H, W, device=device)
 stub = ConstantVelocityStub(x0, x1)
 z0 = torch.randn(1, 1, H, W, device=device)
 
-def rel(a, b): return ((a - b).norm() / (b.norm() + 1e-12)).item()
 
-sampler = NullSpaceFlowSampler(stub, dec, num_steps=50, method="euler",
-                               check_consistency=True, consistency_rtol=1e-2)
+def rel(a, b):
+  return ((a - b).norm() / (b.norm() + 1e-12)).item()
+
+
+sampler = NullSpaceFlowSampler(
+  stub, dec, num_steps=50, method="euler", check_consistency=True, consistency_rtol=1e-2
+)
 out = sampler.sample(z0)
 
 print("[A] Endpoint consistency: A x_hat == y")
@@ -49,7 +53,7 @@ r = rel(dec.project_null(out), predicted_null)
 print(f"    rel(P_N out, prediction) = {r:.2e}  -> {'PASS' if r < 1.5e-2 else 'FAIL'}\n")
 
 print("[C] Per-step consistency invariant held (no AssertionError above)")
-print(f"    -> PASS (sampler ran with check_consistency=True)\n")
+print("    -> PASS (sampler ran with check_consistency=True)\n")
 
 print("[D] Determinism: same z0 -> identical output")
 out2 = sampler.sample(z0.clone())

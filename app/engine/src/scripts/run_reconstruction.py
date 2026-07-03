@@ -17,14 +17,19 @@ signal above pure linear algebra." Every run is appended to the runs log.
 """
 
 from __future__ import annotations
+
 import argparse
+
 import torch
 
+from ..eval.run_log import RunLogger
 from ..evaluate import (
-  ReconstructionEvaluator, default_sr_operator, load_image, to_multiple,
+  ReconstructionEvaluator,
+  default_sr_operator,
+  load_image,
+  to_multiple,
 )
 from ..reconstruct import ReconstructionConfig
-from ..eval.run_log import RunLogger
 
 
 def build_prior_factory(checkpoint: str, device: str):
@@ -33,7 +38,9 @@ def build_prior_factory(checkpoint: str, device: str):
 
   def factory():
     prior = PretrainedScorePrior(
-      checkpoint, device=device, use_fp16=False,   # fp32 for correctness-first
+      checkpoint,
+      device=device,
+      use_fp16=False,  # fp32 for correctness-first
     )
     return prior.as_velocity_prior(DiscreteLinearSchedule(1000, 1e-4, 2e-2))
 
@@ -58,14 +65,18 @@ def main() -> None:
 
   print(f"device: {args.device}")
   gt = load_image(args.image, device=args.device)
-  gt = to_multiple(gt, args.scale)            # SR needs H,W divisible by scale
+  gt = to_multiple(gt, args.scale)  # SR needs H,W divisible by scale
   print(f"image: {tuple(gt.shape)} (cropped to multiple of {args.scale})")
 
   operator = default_sr_operator(
-    scale=args.scale, psf_sigma=args.psf_sigma, device=args.device,
+    scale=args.scale,
+    psf_sigma=args.psf_sigma,
+    device=args.device,
   )
   config = ReconstructionConfig(
-    num_steps=args.steps, method=args.method, cg_iters=args.cg_iters,
+    num_steps=args.steps,
+    method=args.method,
+    cg_iters=args.cg_iters,
     check_consistency=args.check_consistency,
   )
   evaluator = ReconstructionEvaluator(

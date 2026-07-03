@@ -3,8 +3,9 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-from ..priors import VelocityPrior
 from ..decomposition.range_null import RangeNullDecomposition
+from ..priors import VelocityPrior
+
 
 class NullSpaceFlowSampler:
   def __init__(
@@ -12,7 +13,7 @@ class NullSpaceFlowSampler:
     prior: VelocityPrior,
     decomposition: RangeNullDecomposition,
     num_steps: int = 50,
-    method: str = "heun",          # 'euler' (1st order) or 'heun' (2nd order)
+    method: str = "heun",  # 'euler' (1st order) or 'heun' (2nd order)
     check_consistency: bool = False,
     consistency_rtol: float = 1e-3,
   ):

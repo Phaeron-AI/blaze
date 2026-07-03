@@ -1,9 +1,8 @@
-import sys, torch
-import torch.nn.functional as F
+import torch
 
-from ..src.operators import BlurDownsampleOperator, gaussian_psf
-from ..src.operators import ForwardOperator
 from engine.src.decomposition.range_null import RangeNullDecomposition
+
+from ..src.operators import BlurDownsampleOperator, ForwardOperator, gaussian_psf
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(0)
@@ -22,13 +21,15 @@ dec = RangeNullDecomposition(op, y, image_shape=(1, 1, H, W), cg_iters=800)
 print("[1] Consistency theorem: A·reconstruct(z) == y for arbitrary z")
 worst = 0.0
 for i in range(5):
-    z = torch.randn(1, 1, H, W, device=device) * (i + 1)  # wildly different z's
-    x_hat = dec.reconstruct(z)
-    res = dec.consistency_residual(x_hat)
-    worst = max(worst, res)
-    print(f"    z-scale {i+1}:  ||A x_hat - y||/||y|| = {res:.2e}")
-print(f"    -> {'PASS' if worst < 5e-4 else 'FAIL'} (worst {worst:.2e}); "
-      f"model output is annihilated by A as proven\n")
+  z = torch.randn(1, 1, H, W, device=device) * (i + 1)  # wildly different z's
+  x_hat = dec.reconstruct(z)
+  res = dec.consistency_residual(x_hat)
+  worst = max(worst, res)
+  print(f"    z-scale {i+1}:  ||A x_hat - y||/||y|| = {res:.2e}")
+print(
+  f"    -> {'PASS' if worst < 5e-4 else 'FAIL'} (worst {worst:.2e}); "
+  f"model output is annihilated by A as proven\n"
+)
 
 # === Test 2: projectors are idempotent (P_N^2 = P_N) ===
 print("[2] Projector idempotency: P_N(P_N z) == P_N z")
@@ -49,8 +50,10 @@ a = torch.randn(1, 1, H, W, device=device)
 b = torch.randn(1, 1, H, W, device=device)
 ortho = (dec.project_range(a) * dec.project_null(b)).sum().item()
 scale = (dec.project_range(a).norm() * dec.project_null(b).norm()).item() + 1e-12
-print(f"    normalized inner product = {ortho/scale:.2e}  "
-      f"-> {'PASS' if abs(ortho/scale) < 5e-4 else 'FAIL'}\n")
+print(
+  f"    normalized inner product = {ortho/scale:.2e}  "
+  f"-> {'PASS' if abs(ortho/scale) < 5e-4 else 'FAIL'}\n"
+)
 
 # === Test 5: null_velocity lands in the null space (A P_N v ~ 0) ===
 print("[5] Null velocity: A·null_velocity(v) == 0")
@@ -61,12 +64,19 @@ print(f"    ||A P_N v|| / ||A v|| = {anv:.2e}  -> {'PASS' if anv < 5e-4 else 'FA
 # === Test 6: the constructor gate — a broken operator must be REFUSED ===
 print("[6] Constructor gate: broken operator must raise, not build silently")
 
+
 class BrokenOp(ForwardOperator):
   """A^T deliberately not the adjoint of A (wrong padding) -> must be rejected."""
-  def __init__(self, base): self.base = base
-  def A(self, x): return self.base.A(x)
+
+  def __init__(self, base):
+    self.base = base
+
+  def A(self, x):
+    return self.base.A(x)
+
   def AT(self, y):  # corrupt the adjoint: scale it, breaking <Ax,y>=<x,ATy>
     return self.base.AT(y) * 1.7
+
 
 broken = BrokenOp(op)
 try:

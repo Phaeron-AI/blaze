@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import torch
 from torch import Tensor
-from dataclasses import dataclass
-from typing import Optional
 
 from .base import ForwardOperator
+
 
 @dataclass
 class ConjugateGradientInverse:
@@ -14,11 +15,11 @@ class ConjugateGradientInverse:
   tol: float = 1e-10
   damping: float = 1e-6
 
-  def normal_matvec(self, v: Tensor)-> Tensor:
+  def normal_matvec(self, v: Tensor) -> Tensor:
     return self.operator.A_T(self.operator.A(v)) + self.damping * v
-  
-  def solve(self, y: Tensor, image_shape: torch.Size | tuple, x0: Optional[Tensor] = None)-> Tensor:
-    b = self.operator.A_T(y)                      # rhs = A^T y, lives in image space
+
+  def solve(self, y: Tensor, image_shape: torch.Size | tuple, x0: Tensor | None = None) -> Tensor:
+    b = self.operator.A_T(y)  # rhs = A^T y, lives in image space
     x = torch.zeros(image_shape, device=b.device, dtype=b.dtype) if x0 is None else x0.clone()
     r = b - self.normal_matvec(x)
     p = r.clone()

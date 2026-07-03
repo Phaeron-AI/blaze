@@ -12,17 +12,18 @@ Gates (both must pass before the real-prior number is trustworthy):
           signal, not a bug.
 """
 
-import sys
 import math
+import sys
+
 import torch
 
-from ..src.operators.blur_downsample import BlurDownsampleOperator, gaussian_psf
 from ..src.decomposition.range_null import RangeNullDecomposition
-from ..src.priors.schedules import DiscreteLinearSchedule
-from ..src.samplers.ddnm import DDNMSampler
-from ..src.reconstruct import DDNMReconstructor, ReconstructionConfig
-from ..src.eval.metrics import psnr, ssim
+from ..src.eval.metrics import psnr
 from ..src.eval.syn_images import make_test_image
+from ..src.operators.blur_downsample import BlurDownsampleOperator, gaussian_psf
+from ..src.priors.schedules import DiscreteLinearSchedule
+from ..src.reconstruct import DDNMReconstructor, ReconstructionConfig
+from ..src.samplers.ddnm import DDNMSampler
 
 ckpt = sys.argv[1] if len(sys.argv) > 1 else None
 if not ckpt:
@@ -38,6 +39,7 @@ torch.backends.cudnn.enabled = False
 # --- test image: real photo if given, else synthetic 'shapes' (mixed structure) ---
 if image_path:
   from ..src.evaluate import load_image, to_multiple
+
   x_true = to_multiple(load_image(image_path, device), 2)
 else:
   x_true = make_test_image("shapes", size=256, device=device)
@@ -52,8 +54,10 @@ shape = tuple(x_true.shape)
 def report(tag, out, dec):
   fl = psnr(dec.pinv_reconstruction.clamp(0, 1), x_true)
   rc = psnr(out.clamp(0, 1), x_true)
-  print(f"  {tag}: floor {fl:.2f} dB | recon {rc:.2f} dB | gap {rc - fl:+.2f} dB "
-        f"| consistency {dec.consistency_residual(out):.2e}")
+  print(
+    f"  {tag}: floor {fl:.2f} dB | recon {rc:.2f} dB | gap {rc - fl:+.2f} dB "
+    f"| consistency {dec.consistency_residual(out):.2e}"
+  )
   return rc - fl
 
 
@@ -96,8 +100,9 @@ print("[REAL] pretrained ImageNet prior")
 from ..src.priors.pretrained_score import PretrainedScorePrior
 
 prior = PretrainedScorePrior(ckpt, device=device, use_fp16=False)
-recon = DDNMReconstructor(op, prior.eps_at_step, sched,
-                          ReconstructionConfig(num_steps=100, cg_iters=800))
+recon = DDNMReconstructor(
+  op, prior.eps_at_step, sched, ReconstructionConfig(num_steps=100, cg_iters=800)
+)
 g = torch.Generator(device=device).manual_seed(0)
 out = recon.reconstruct(y, shape, generator=g)
 dec_real = RangeNullDecomposition(op, y, shape, cg_iters=800)

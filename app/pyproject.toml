@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keystone-engine"
+version = "0.1.0"
+description = "Measurement-consistent generative restoration engine (Structa / Keystone)."
+requires-python = ">=3.11"
+dependencies = [
+  "torch>=2.1",
+  "numpy>=1.24",
+  "pillow>=10.0",
+]
+
+# Editable install (`pip install -e .`) puts the engine on the path so
+# imports resolve without sys.path manipulation anywhere in the codebase.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["engine*"]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "pytest>=8.0",
+  "pre-commit>=3.8",
+]
+# guided-diffusion is installed separately as an editable clone; see
+# README.md. It is intentionally not a declared dependency because its
+# packaging does not install cleanly via pip.
+
+# --------------------------------------------------------------------------
+# Ruff: formatter + linter. Indentation is 2 spaces, enforced repo-wide.
+# --------------------------------------------------------------------------
+[tool.ruff]
+indent-width = 2
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = [
+  "E",    # pycodestyle errors
+  "F",    # pyflakes
+  "I",    # isort (import ordering)
+  "N",    # pep8-naming
+  "UP",   # pyupgrade
+  "B",    # flake8-bugbear
+  "SIM",  # flake8-simplify
+  "TD",   # flake8-todos (enforces TODO format)
+  "FIX",  # flake8-fixme (flags leftover FIXME/XXX)
+]
+ignore = [
+  "E741",  # ambiguous names (i, l) are fine for math indices
+]
+
+[tool.ruff.lint.per-file-ignores]
+# A and AT are the measurement operator and its adjoint — deliberate math
+# notation matching the derivations, clearer here than a lowercased name.
+"engine/src/protocols.py" = ["N802"]
+"engine/src/operators/*.py" = ["N802"]
+
+[tool.ruff.lint.pycodestyle]
+# Comments follow the 72-char readability standard (STANDARDS.md section 5);
+# code lines follow the 100-char limit above.
+max-doc-length = 72
+
+# The TD and FIX rule groups selected above enforce that TODO/FIXME markers
+# use the greppable, owned form TODO(owner): rather than ad-hoc tags.
+
+# --------------------------------------------------------------------------
+# Mypy: static type checking. This is what makes the Protocols in
+# engine/src/protocols.py enforced rather than documentation.
+# --------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+# Third-party libraries without stubs are not the engine's concern.
+[[tool.mypy.overrides]]
+module = ["guided_diffusion.*", "torchvision.*"]
+ignore_missing_imports = true
+
+# --------------------------------------------------------------------------
+# Pytest: fast unit tests by default; integration tests need model weights
+# and are opt-in via `-m integration`.
+# --------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["engine/tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "integration: requires model weights (deselect with '-m \"not integration\"')",
+  "slow: long-running tests",
+]

@@ -1,8 +1,11 @@
 from __future__ import annotations
-import json, os, time
+
+import json
+import os
+import time
 from pathlib import Path
- 
- 
+
+
 class RunLogger:
   def __init__(self, path: str | os.PathLike):
     self.path = Path(path)

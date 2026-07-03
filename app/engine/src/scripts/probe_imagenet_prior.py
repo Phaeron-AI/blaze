@@ -1,4 +1,5 @@
 import sys
+
 import torch
 
 print(sys.argv[-1])
@@ -32,8 +33,9 @@ if not isinstance(sd, dict):
 keys = list(sd.keys())
 n_tensors = sum(1 for v in sd.values() if torch.is_tensor(v))
 total_params = sum(v.numel() for v in sd.values() if torch.is_tensor(v))
-print(f"[2] state-dict: {len(keys)} entries, {n_tensors} tensors, "
-  f"{total_params/1e6:.1f}M params")
+print(
+  f"[2] state-dict: {len(keys)} entries, {n_tensors} tensors, " f"{total_params/1e6:.1f}M params"
+)
 print(f"first keys: {keys[:3]}")
 print(f"last keys: {keys[-3:]}")
 
@@ -55,7 +57,7 @@ if final:
 else:
   print("[3] could not auto-identify the output conv; inspect keys manually.")
   print("    (look for the last conv weight with out_channels 3 or 6)")
- 
+
 print("\n" + "=" * 60)
 print("If [1] OK and [3] reports 6 channels: environment is clear and we")
 print("know exactly what the wrapper must handle. Ready to build it.")

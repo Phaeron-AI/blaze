@@ -3,8 +3,8 @@ from __future__ import annotations
 from torch import Tensor
 
 from ..operators.base import ForwardOperator
-from ..operators.pseudoinverse import ConjugateGradientInverse
 from ..operators.diagnostics import assert_adjoint, assert_alignment
+from ..operators.pseudoinverse import ConjugateGradientInverse
 
 
 class RangeNullDecomposition:
@@ -36,7 +36,6 @@ class RangeNullDecomposition:
 
   def project_null(self, x: Tensor) -> Tensor:
     return x - self.project_range(x)
-
 
   def reconstruct(self, z: Tensor) -> Tensor:
     return self._A_dag_y + self.project_null(z)

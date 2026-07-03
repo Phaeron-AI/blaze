@@ -1,6 +1,6 @@
 """DDNM sampler — diffusion-native reconstruction on the range-null subspace.
 
-citations: 
+citations:
   1. "Wang, Yu, Zhang. Zero-Shot Image Restoration Using Denoising Diffusion Null-Space Model. ICLR 2023"
   2. "Ho, Jain, Abbeel. Denoising Diffusion Probabilistic Models. NeurIPS 2020.
 
@@ -20,12 +20,14 @@ that lie on the noised-image manifold at the queried level. A naive
 null-space ODE feeds off-manifold states and collapses; DDNM keeps every
 intermediate state on that manifold by cycling denoise, project, renoise.
 The range-null projection reuses the certified decomposition unchanged.
-  
+
 """
 
 from __future__ import annotations
+
 import math
-from typing import Callable, Optional
+from collections.abc import Callable
+
 import torch
 from torch import Tensor
 
@@ -34,9 +36,8 @@ from ..priors.schedules import DiscreteLinearSchedule
 
 
 class DDNMSampler:
-
   """Range-null DDNM sampler for a pretrained eps-prediction prior.
- 
+
   Parameters
   ----------
   eps_fn : Callable[[Tensor, int], Tensor]
@@ -54,6 +55,7 @@ class DDNMSampler:
   stochastic : bool
       If True, use DDPM-style random renoising; else DDIM-deterministic.
   """
+
   def __init__(
     self,
     eps_fn: Callable[[Tensor, int], Tensor],
@@ -95,14 +97,14 @@ class DDNMSampler:
     return ts
 
   @torch.no_grad()
-  def sample(self, generator: Optional[torch.Generator] = None) -> Tensor:
+  def sample(self, generator: torch.Generator | None = None) -> Tensor:
     """
-      Run DDNM sampling. Returns the reconstruction in PIPELINE space,
-      measurement-consistent (A x_hat = y).
+    Run DDNM sampling. Returns the reconstruction in PIPELINE space,
+    measurement-consistent (A x_hat = y).
 
-      The result satisfies the measurement to solver tolerance because the
-      range component is pinned to A_dag y at every step while the prior is
-      confined to the null space.
+    The result satisfies the measurement to solver tolerance because the
+    range component is pinned to A_dag y at every step while the prior is
+    confined to the null space.
     """
     dec = self.dec
     shape = dec.image_shape
@@ -131,7 +133,7 @@ class DDNMSampler:
       # and leaves only the null-space content to the prior, which is
       # what makes the output measurement-consistent by construction.
       x0_pipeline = self._to_pipeline(x0_model)
-      x0_pipeline = dec.reconstruct(x0_pipeline)        # A_dag y + P_N x0
+      x0_pipeline = dec.reconstruct(x0_pipeline)  # A_dag y + P_N x0
       if self.check_consistency:
         dec.assert_consistent(x0_pipeline, rtol=self.consistency_rtol)
       x0_model = self._to_model(x0_pipeline)
@@ -163,4 +165,4 @@ class DDNMSampler:
 
     # The loop returns at the final step; this guards against an empty
     # schedule and keeps the return type total.
-    return self._to_pipeline(x_t) 
+    return self._to_pipeline(x_t)

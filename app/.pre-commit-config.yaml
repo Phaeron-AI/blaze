@@ -1,0 +1,31 @@
+# Install once with `pre-commit install`; thereafter runs on every commit.
+# Run across the whole repo on demand with `pre-commit run --all-files`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Linter first (with autofix), then formatter, matching CI order.
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        # Type-check only the library; scripts and tests are exercised by
+        # pytest. Extra deps make torch's types available to the checker.
+        files: ^engine/src/
+        additional_dependencies: [torch, numpy]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        # Guard against a checkpoint or sample image being committed by
+        # accident; artifacts belong outside version control.
+        args: [--maxkb=1024]
+      - id: check-yaml
+      - id: check-toml

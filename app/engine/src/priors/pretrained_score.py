@@ -3,10 +3,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-from typing import Optional
-
-from .score_to_velocity import ScoreToVelocity
 from .schedules import DiscreteLinearSchedule
+from .score_to_velocity import ScoreToVelocity
 
 IMAGENET256_UNCOND_FLAGS = dict(
   image_size=256,
@@ -22,6 +20,7 @@ IMAGENET256_UNCOND_FLAGS = dict(
   noise_schedule="linear",
 )
 
+
 class PretrainedScorePrior:
   def __init__(
     self,
@@ -32,7 +31,8 @@ class PretrainedScorePrior:
     flow_time_is_clean_at_one: bool = True,
   ):
     from guided_diffusion.script_util import (  # type: ignore[import]
-      create_model_and_diffusion, model_and_diffusion_defaults,
+      create_model_and_diffusion,
+      model_and_diffusion_defaults,
     )
 
     args = model_and_diffusion_defaults()
@@ -61,26 +61,28 @@ class PretrainedScorePrior:
     self.flow_clean_at_one = flow_time_is_clean_at_one
 
   def _flow_t_to_step(self, t: float) -> float:
-    tau = (1.0 - t) if self.flow_clean_at_one else t   # diffusion time in [0,1]
+    tau = (1.0 - t) if self.flow_clean_at_one else t  # diffusion time in [0,1]
     return max(0.0, min(1.0, tau)) * (self.T - 1)
 
   @torch.no_grad()
   def eps_at_step(self, x: Tensor, step: int | float) -> Tensor:
     ts = torch.full((x.shape[0],), float(step), device=x.device, dtype=torch.float32)
-    out = self.model(x, ts)              # (N, 6, H, W)
-    return out[:, :3]                    # eps; discard the learned-variance half
+    out = self.model(x, ts)  # (N, 6, H, W)
+    return out[:, :3]  # eps; discard the learned-variance half
 
   @torch.no_grad()
   def eps(self, x: Tensor, t) -> Tensor:
     return self.eps_at_step(x, self._flow_t_to_step(float(t)))
 
-  def as_velocity_prior(self, schedule: Optional[DiscreteLinearSchedule] = None) -> ScoreToVelocity:
+  def as_velocity_prior(self, schedule: DiscreteLinearSchedule | None = None) -> ScoreToVelocity:
     sched = schedule or DiscreteLinearSchedule(
-      num_steps=self.T, beta_start=1e-4, beta_end=2e-2,
+      num_steps=self.T,
+      beta_start=1e-4,
+      beta_end=2e-2,
     )
     return ScoreToVelocity(
       model_fn=lambda xt, tt: self.eps(xt, tt),
-      schedule=sched, # type: ignore[arg-type]
+      schedule=sched,  # type: ignore[arg-type]
       parameterization="eps",
       flow_time_is_clean_at_one=self.flow_clean_at_one,
     )

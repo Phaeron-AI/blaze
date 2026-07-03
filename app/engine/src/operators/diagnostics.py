@@ -1,39 +1,47 @@
 from __future__ import annotations
+
 import torch
+from torch import Tensor
+from typing import Optional
 
 from .base import ForwardOperator
 from .pseudoinverse import ConjugateGradientInverse
 
-def _psnr(a: torch.Tensor, b: torch.Tensor, data_range: float = 1.0) -> float:
+
+def _psnr(a: Tensor, b: Tensor, data_range: float = 1.0) -> float:
   mse = torch.mean((a - b) ** 2).item()
   if mse == 0:
     return float("inf")
-  return 10.0 * torch.log10(torch.tensor(data_range ** 2 / mse)).item()
+  return 10.0 * torch.log10(Tensor(data_range**2 / mse)).item()
 
-def adjoint_test(op: ForwardOperator, image_shape, device, seed: int = 0):
+
+def adjoint_test(op: ForwardOperator, image_shape: tuple[int, ...], device, seed: int = 0)-> tuple[Optional[float], Optional[float], float]:
   g = torch.Generator(device=device).manual_seed(seed)
   x = torch.randn(*image_shape, generator=g, device=device)
   y = op.A(x)
   yr = torch.randn(*y.shape, generator=g, device=device)
   ATyr = op.A_T(yr)
-  if not isinstance(ATyr, torch.Tensor) or ATyr.shape != x.shape:
-    return None, None, float("inf")
+  if not isinstance(ATyr, Tensor) or ATyr.shape != x.shape:
+    return None, None, float("inf") 
   lhs = (op.A(x) * yr).sum().item()
   rhs = (x * ATyr).sum().item()
   rel = abs(lhs - rhs) / (abs(lhs) + 1e-12)
   return lhs, rhs, rel
 
-def consistency_test(op: ForwardOperator, x: torch.Tensor, max_iters: int = 200):
+
+def consistency_test(op: ForwardOperator, x: Tensor, max_iters: int = 200):
   inv = ConjugateGradientInverse(op, max_iters=max_iters)
   y = op.A(x)
   x_dag = inv.solve(y, x.shape)
   y_round = op.A(x_dag)
   return _psnr(y_round, y), (y_round - y).abs().max().item()
 
-def reconstruction_floor(op: ForwardOperator, x: torch.Tensor, max_iters: int = 200) -> float:
+
+def reconstruction_floor(op: ForwardOperator, x: Tensor, max_iters: int = 200) -> float:
   inv = ConjugateGradientInverse(op, max_iters=max_iters)
   y = op.A(x)
   return _psnr(inv.solve(y, x.shape), x)
+
 
 def impulse_alignment_test(op: ForwardOperator, H: int, W: int, device, max_iters: int = 200):
   inv = ConjugateGradientInverse(op, max_iters=max_iters)
@@ -48,7 +56,8 @@ def impulse_alignment_test(op: ForwardOperator, H: int, W: int, device, max_iter
   cx_hat = (resp.sum(0) * xs).sum() / total
   dy = (cy_hat - cy).item()
   dx = (cx_hat - cx).item()
-  return dy, dx, (dy ** 2 + dx ** 2) ** 0.5
+  return dy, dx, (dy**2 + dx**2) ** 0.5
+
 
 def assert_adjoint(op: ForwardOperator, image_shape, device, rtol: float = 1e-4) -> None:
   lhs, _, rel = adjoint_test(op, image_shape, device)
@@ -63,6 +72,7 @@ def assert_adjoint(op: ForwardOperator, image_shape, device, rtol: float = 1e-4)
       f"{rel:.2e} >= {rtol:.0e}. A^T is not the true adjoint of A. "
       "Range-null projectors would not be orthogonal. Refusing to build."
     )
+
 
 def assert_alignment(op: ForwardOperator, H: int, W: int, device, max_drift: float = 0.05) -> None:
   _, _, drift = impulse_alignment_test(op, H, W, device)
