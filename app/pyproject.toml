@@ -56,13 +56,19 @@ select = [
 ]
 ignore = [
   "E741",  # ambiguous names (i, l) are fine for math indices
+  "N812",  # import torch.nn.functional as F is the universal torch convention
 ]
 
 [tool.ruff.lint.per-file-ignores]
-# A and AT are the measurement operator and its adjoint — deliberate math
-# notation matching the derivations, clearer here than a lowercased name.
+# A, AT, Ap and similar are deliberate math notation — the operator, its
+# adjoint, and matrix-vector products — matching the derivations. N802
+# covers method names, N806 covers local variables.
 "engine/src/protocols.py" = ["N802"]
-"engine/src/operators/*.py" = ["N802"]
+"engine/src/operators/*.py" = ["N802", "N803", "N806"]
+"engine/src/decomposition/*.py" = ["N802", "N803", "N806"]
+"engine/src/samplers/*.py" = ["N806"]
+# Tests define small operator stubs and may import after a header print.
+"engine/tests/*.py" = ["N802", "N806", "E402"]
 
 [tool.ruff.lint.pycodestyle]
 # Comments follow the 72-char readability standard (STANDARDS.md section 5);
@@ -100,3 +106,5 @@ markers = [
   "integration: requires model weights (deselect with '-m \"not integration\"')",
   "slow: long-running tests",
 ]
+
+"engine/src/eval/*.py" = ["N803", "N806"]

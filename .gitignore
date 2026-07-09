@@ -2,3 +2,6 @@
 external/
 runs/
 samples/
+
+*.egg-info/
+.mypy_cache/

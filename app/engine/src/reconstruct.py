@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor
 
+from typing import Any
+
 from .decomposition.range_null import RangeNullDecomposition
 from .operators import ForwardOperator
 from .priors.base import VelocityPrior
@@ -69,7 +71,7 @@ class DDNMReconstructor:
   def __init__(
     self,
     operator: ForwardOperator,
-    eps_fn,
+    eps_fn: Any,
     schedule: DiscreteLinearSchedule | None = None,
     config: ReconstructionConfig | None = None,
     prior_scale: float = 2.0,

@@ -3,6 +3,8 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
+from typing import Any
+
 from ..decomposition.range_null import RangeNullDecomposition
 from ..priors import VelocityPrior
 
@@ -26,13 +28,13 @@ class NullSpaceFlowSampler:
     self.check_consistency = check_consistency
     self.consistency_rtol = consistency_rtol
 
-  def _null_v(self, x_hat: Tensor, t: float, **cond) -> Tensor:
+  def _null_v(self, x_hat: Tensor, t: float, **cond: Any) -> Tensor:
     """P_N v_phi(x_hat, t): the learned velocity projected into the null space."""
     v = self.prior.velocity(x_hat, t, **cond)
     return self.dec.null_velocity(v)
 
   @torch.no_grad()
-  def sample(self, z0: Tensor, **cond) -> Tensor:
+  def sample(self, z0: Tensor, **cond: Any) -> Tensor:
     """Integrate from a base draw z0 to the t=1 reconstruction.
 
     Returns x_hat at t=1, guaranteed measurement-consistent: A x_hat = y.

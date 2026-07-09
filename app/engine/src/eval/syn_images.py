@@ -6,8 +6,8 @@ import torch
 def make_test_image(
   kind: str = "shapes", size: int = 256, seed: int = 0, device: str = "cpu"
 ) -> torch.Tensor:
-  H = W = size
-  yy, xx = torch.meshgrid(torch.linspace(0, 1, H), torch.linspace(0, 1, W), indexing="ij")
+  h = w = size
+  yy, xx = torch.meshgrid(torch.linspace(0, 1, h), torch.linspace(0, 1, w), indexing="ij")
 
   if kind == "gradient":
     img = torch.stack([xx, yy, (xx + yy) / 2])

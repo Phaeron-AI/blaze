@@ -22,6 +22,9 @@ import argparse
 
 import torch
 
+from typing import Callable
+
+from ..priors.score_to_velocity import ScoreToVelocity
 from ..eval.run_log import RunLogger
 from ..evaluate import (
   ReconstructionEvaluator,
@@ -32,11 +35,11 @@ from ..evaluate import (
 from ..reconstruct import ReconstructionConfig
 
 
-def build_prior_factory(checkpoint: str, device: str):
+def build_prior_factory(checkpoint: str, device: str)-> Callable[[], ScoreToVelocity]:
   from ..priors.pretrained_score import PretrainedScorePrior
   from ..priors.schedules import DiscreteLinearSchedule
 
-  def factory():
+  def factory()-> ScoreToVelocity:
     prior = PretrainedScorePrior(
       checkpoint,
       device=device,

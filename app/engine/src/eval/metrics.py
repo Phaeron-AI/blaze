@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
+from typing import Any
 
 def _check_inputs(a: Tensor, b: Tensor, data_range: float) -> None:
   if a.shape != b.shape:
@@ -32,7 +33,7 @@ def psnr(pred: Tensor, target: Tensor, data_range: float = 1.0) -> float:
   return 10.0 * math.log10(data_range**2 / mse)
 
 
-def _gaussian_window(window_size: int, sigma: float, channels: int, device, dtype) -> Tensor:
+def _gaussian_window(window_size: int, sigma: float, channels: int, device: Any, dtype: Any) -> Tensor:
   coords = torch.arange(window_size, device=device, dtype=dtype) - window_size // 2
   g = torch.exp(-(coords**2) / (2 * sigma**2))
   g = (g / g.sum()).unsqueeze(0)

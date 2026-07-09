@@ -23,6 +23,8 @@ from dataclasses import dataclass
 import torch
 from torch import Tensor
 
+from typing import Any
+
 from .base import VelocityPrior
 
 
@@ -91,7 +93,7 @@ class ScoreToVelocity(VelocityPrior):
     ab = self.schedule.alpha_bar(tau).to(x_tau.device)
     return -out / torch.sqrt(1.0 - ab).clamp(min=1e-8)
 
-  def velocity(self, x_t: Tensor, t, **cond) -> Tensor:
+  def velocity(self, x_t: Tensor, t: Any, **cond: Any) -> Tensor:
     """Return the flow velocity at flow time t.
 
     Parameters

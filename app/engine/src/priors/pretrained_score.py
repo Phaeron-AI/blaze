@@ -30,7 +30,7 @@ class PretrainedScorePrior:
     num_diffusion_steps: int = 1000,
     flow_time_is_clean_at_one: bool = True,
   ):
-    from guided_diffusion.script_util import (  # type: ignore[import]
+    from guided_diffusion.script_util import (
       create_model_and_diffusion,
       model_and_diffusion_defaults,
     )
@@ -45,7 +45,7 @@ class PretrainedScorePrior:
       state = state["state_dict"]
     missing, unexpected = model.load_state_dict(state, strict=False)
     if missing or unexpected:
-      # surface any mismatch loudly — a silent partial load is a silent bug.
+      # A silent partial load is a silent bug, so surface any mismatch loudly.
       raise RuntimeError(
         f"checkpoint/architecture mismatch: "
         f"{len(missing)} missing, {len(unexpected)} unexpected keys. "
@@ -61,27 +61,30 @@ class PretrainedScorePrior:
     self.flow_clean_at_one = flow_time_is_clean_at_one
 
   def _flow_t_to_step(self, t: float) -> float:
-    tau = (1.0 - t) if self.flow_clean_at_one else t  # diffusion time in [0,1]
+    # Diffusion time in [0, 1]; invert when flow time is clean at one.
+    tau = (1.0 - t) if self.flow_clean_at_one else t
     return max(0.0, min(1.0, tau)) * (self.T - 1)
 
   @torch.no_grad()
   def eps_at_step(self, x: Tensor, step: int | float) -> Tensor:
     ts = torch.full((x.shape[0],), float(step), device=x.device, dtype=torch.float32)
-    out = self.model(x, ts)  # (N, 6, H, W)
+    out: Tensor = self.model(x, ts)  # (N, 6, H, W)
     return out[:, :3]  # eps; discard the learned-variance half
 
   @torch.no_grad()
-  def eps(self, x: Tensor, t) -> Tensor:
+  def eps(self, x: Tensor, t: float) -> Tensor:
     return self.eps_at_step(x, self._flow_t_to_step(float(t)))
 
-  def as_velocity_prior(self, schedule: DiscreteLinearSchedule | None = None) -> ScoreToVelocity:
+  def as_velocity_prior(
+    self, schedule: DiscreteLinearSchedule | None = None
+  ) -> ScoreToVelocity:
     sched = schedule or DiscreteLinearSchedule(
       num_steps=self.T,
       beta_start=1e-4,
       beta_end=2e-2,
     )
     return ScoreToVelocity(
-      model_fn=lambda xt, tt: self.eps(xt, tt),
+      model_fn=lambda xt, tt: self.eps(xt, tt), # type: ignore
       schedule=sched,  # type: ignore[arg-type]
       parameterization="eps",
       flow_time_is_clean_at_one=self.flow_clean_at_one,

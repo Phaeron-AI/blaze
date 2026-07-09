@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from torch import Tensor
+from typing import Any
 
 from .base import VelocityPrior
 
@@ -19,7 +20,7 @@ class NormalizedVelocityPrior(VelocityPrior):
   def from_model_space(self, x_model: Tensor) -> Tensor:
     return (x_model - self.shift) / self.scale
 
-  def velocity(self, x_t: Tensor, t: float, **cond) -> Tensor:
+  def velocity(self, x_t: Tensor, t: float, **cond: Any) -> Tensor:
     x_model = self.to_model_space(x_t)
     v_model = self.inner.velocity(x_model, t, **cond)
 

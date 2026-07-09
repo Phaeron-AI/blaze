@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor
 
-
+from typing import Any
 class DiscreteLinearSchedule:
   def __init__(
     self, num_steps: int = 1000, beta_start: float = 1e-4, beta_end: float = 2e-2
@@ -23,13 +23,13 @@ class DiscreteLinearSchedule:
     frac = s - lo
     return lo, hi, frac
 
-  def beta(self, tau) -> Tensor:
+  def beta(self, tau: Any) -> Tensor:
     lo, hi, frac = self._tau_to_index(float(tau))
     b = self._betas[lo] * (1 - frac) + self._betas[hi] * frac
 
     return b.to(torch.float32)
 
-  def alpha_bar(self, tau) -> Tensor:
+  def alpha_bar(self, tau: Any) -> Tensor:
     lo, hi, frac = self._tau_to_index(tau)
 
     log_lo = torch.log(self._alpha_bars[lo])
